@@ -1,39 +1,37 @@
-# ---------- Build stage ----------
-# Nutzt das .NET SDK, um ARM64-Binaries zu erzeugen
+# ---------- Build (holt Upstream & publish ARM64) ----------
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG PROJECT_PATH="Server/RimWorldTogether.Server.csproj"  # <- ggf. anpassen
-ARG CONFIGURATION="Release"
-ARG RUNTIME_ID="linux-arm64"
+ARG BRANCH=development
+ARG RUNTIME_ID=linux-arm64
+ARG CONFIGURATION=Release
+
+# Git für Clone
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
+# Upstream-Source holen (nur den development-Branch)
+RUN git clone --depth=1 -b ${BRANCH} https://github.com/RimWorld-Together/Rimworld-Together.git upstream
+WORKDIR /src/upstream
 
-# 1) Source rein
-COPY . .
+# HINWEIS: Pfade können sich ändern. Diese passen derzeit zum Repo (Server-Projekt unter Source/Server)
+# Restore + Publish für ARM64 (framework-dependent, nutzt dotnet runtime im nächsten Stage)
+RUN dotnet restore Source/Server/RimWorldTogether.Server.csproj && \
+    dotnet publish Source/Server/RimWorldTogether.Server.csproj \
+      -c ${CONFIGURATION} -r ${RUNTIME_ID} --no-self-contained -o /out
 
-# 2) Restore + Publish für ARM64
-RUN dotnet restore "$PROJECT_PATH" \
- && dotnet publish "$PROJECT_PATH" -c "$CONFIGURATION" -r "$RUNTIME_ID" \
-    --no-self-contained -o /out
-
-# ---------- Runtime stage ----------
-# Schlankes .NET Runtime-Image für ARM64
+# ---------- Runtime (ARM64) ----------
 FROM mcr.microsoft.com/dotnet/runtime:8.0
-# Zeit/Locale optional:
-ENV TZ=Etc/UTC \
-    DOTNET_EnableDiagnostics=0 \
-    ASPNETCORE_URLS=http://0.0.0.0:25555
-
-# Workdir im Container
+ENV TZ=Europe/Berlin DOTNET_EnableDiagnostics=0
 WORKDIR /app
 
-# Artefakte aus dem Buildstage
+# Artefakte übernehmen
 COPY --from=build /out/ ./
 
-# Falls der Server einen Datenordner nutzt:
+# Datenordner
 VOLUME ["/Data"]
 
-# Expose den Game-Server-Port (TCP – falls UDP benötigt wird, ergänzen)
+# RimWorld Together nutzt Port 25555 (TCP). Falls UDP gebraucht wird, später im Compose mappen.
 EXPOSE 25555
 
-# Passe den DLL-Namen an, falls abweichend:
+# Start (DLL-Name ggf. anpassen, falls im Publish anders)
 CMD ["dotnet", "RimWorldTogether.Server.dll"]
