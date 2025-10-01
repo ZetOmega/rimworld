@@ -7,8 +7,8 @@ services:
         # HIER GENAU EINTRAGEN (von der Releases-Seite):
         # z.B. RWT_VERSION: v1.7.7
         # z.B. RWT_ASSET: RimWorldTogether-Server-linux-arm64.tar.gz
-        RWT_VERSION: vX.Y.Z
-        RWT_ASSET: RimWorldTogether-Server-linux-arm64.tar.gz
+        RWT_VERSION: 25.7.11.1
+        RWT_ASSET: linux-arm64.zip
     container_name: rimworld-together
     ports:
       - "25555:25555/tcp"
