@@ -1,16 +1,18 @@
 services:
   rimworld-together:
     build:
-      context: .                   # ← nutzt den Dockerfile aus DEINEM Repo
+      context: .
       dockerfile: Dockerfile
       args:
-        BRANCH: development        # Upstream-Branch
-        RUNTIME_ID: linux-arm64
-        CONFIGURATION: Release
+        # HIER GENAU EINTRAGEN (von der Releases-Seite):
+        # z.B. RWT_VERSION: v1.7.7
+        # z.B. RWT_ASSET: RimWorldTogether-Server-linux-arm64.tar.gz
+        RWT_VERSION: vX.Y.Z
+        RWT_ASSET: RimWorldTogether-Server-linux-arm64.tar.gz
     container_name: rimworld-together
     ports:
       - "25555:25555/tcp"
-      # - "25555:25555/udp"        # falls UDP benötigt wird, Zeile aktivieren
+      # - "25555:25555/udp"   # auskommentieren, wenn UDP benötigt wird
     volumes:
       - ./Data:/Data
     environment:
