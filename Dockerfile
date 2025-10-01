@@ -1,51 +1,39 @@
-# Use Ubuntu 22.04 LTS as base for ARM64 compatibility
-FROM ubuntu:22.04
+# ---------- Build stage ----------
+# Nutzt das .NET SDK, um ARM64-Binaries zu erzeugen
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG PROJECT_PATH="Server/RimWorldTogether.Server.csproj"  # <- ggf. anpassen
+ARG CONFIGURATION="Release"
+ARG RUNTIME_ID="linux-arm64"
 
-# Set environment variables
-ENV DEBIAN_FRONTEND=noninteractive \
-    TZ=UTC \
-    RIMWORLD_PORT=25555 \
-    RIMWORLD_DATA_DIR=/app/data
+WORKDIR /src
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    wget \
-    unzip \
-    libicu70 \
-    libssl3 \
-    ca-certificates \
-    tzdata \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+# 1) Source rein
+COPY . .
 
-# Create application directory structure
+# 2) Restore + Publish für ARM64
+RUN dotnet restore "$PROJECT_PATH" \
+ && dotnet publish "$PROJECT_PATH" -c "$CONFIGURATION" -r "$RUNTIME_ID" \
+    --no-self-contained -o /out
+
+# ---------- Runtime stage ----------
+# Schlankes .NET Runtime-Image für ARM64
+FROM mcr.microsoft.com/dotnet/runtime:8.0
+# Zeit/Locale optional:
+ENV TZ=Etc/UTC \
+    DOTNET_EnableDiagnostics=0 \
+    ASPNETCORE_URLS=http://0.0.0.0:25555
+
+# Workdir im Container
 WORKDIR /app
 
-# Download and extract RimWorld Together
-RUN wget -q https://github.com/RimWorld-Together/Rimworld-Together/releases/download/25.7.11.1/linux-arm64.zip -O rimworld.zip && \
-    unzip -q rimworld.zip && \
-    rm rimworld.zip && \
-    chmod +x RimWorldTogether && \
-    mkdir -p data
+# Artefakte aus dem Buildstage
+COPY --from=build /out/ ./
 
-# Create non-root user
-RUN groupadd -r rimworld && \
-    useradd -r -g rimworld -u 1000 rimworld && \
-    chown -R rimworld:rimworld /app
+# Falls der Server einen Datenordner nutzt:
+VOLUME ["/Data"]
 
-# Switch to non-root user
-USER rimworld
-
-# Health check (commented out as it might not work without proper endpoint)
-# HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-#     CMD curl -f http://localhost:25555/ || exit 1
-
-# Expose the RimWorld Together port
+# Expose den Game-Server-Port (TCP – falls UDP benötigt wird, ergänzen)
 EXPOSE 25555
 
-# Set volume mount point
-VOLUME ["/app/data"]
-
-# Set entrypoint
-ENTRYPOINT ["./RimWorldTogether"]
+# Passe den DLL-Namen an, falls abweichend:
+CMD ["dotnet", "RimWorldTogether.Server.dll"]
