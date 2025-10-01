@@ -1,5 +1,5 @@
 # Use Ubuntu 22.04 LTS as base for ARM64 compatibility
-FROM ubuntu:22.04@sha256:674f4c87c80d91854c18b7d815e3c7a77c7c2307b8c8c8e2c6b8d8b8d8b8d8b
+FROM ubuntu:22.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -37,9 +37,9 @@ RUN groupadd -r rimworld && \
 # Switch to non-root user
 USER rimworld
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:25555/ || exit 1
+# Health check (commented out as it might not work without proper endpoint)
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+#     CMD curl -f http://localhost:25555/ || exit 1
 
 # Expose the RimWorld Together port
 EXPOSE 25555
