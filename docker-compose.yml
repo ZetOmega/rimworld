@@ -1,16 +1,16 @@
 services:
   rimworld-together:
-    # Baue nativ auf deinem ARM-Host – Build-Kontext ist das Upstream-Repo
     build:
-      context: https://github.com/RimWorld-Together/Rimworld-Together.git#development
+      context: .                   # ← nutzt den Dockerfile aus DEINEM Repo
       dockerfile: Dockerfile
-      # Falls deren Dockerfile eine Runtime-ID akzeptiert:
       args:
+        BRANCH: development        # Upstream-Branch
         RUNTIME_ID: linux-arm64
+        CONFIGURATION: Release
     container_name: rimworld-together
     ports:
       - "25555:25555/tcp"
-      # - "25555:25555/udp"   # aktivieren, wenn UDP gebraucht wird
+      # - "25555:25555/udp"        # falls UDP benötigt wird, Zeile aktivieren
     volumes:
       - ./Data:/Data
     environment:
