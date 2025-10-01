@@ -1,1 +1,37 @@
 
+version: '3.8'
+
+services:
+  rimworld-together:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rimworld-together
+    restart: unless-stopped
+    ports:
+      - "25555:25555"
+    volumes:
+      - rimworld_data:/app/data
+    environment:
+      - TZ=America/New_York
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:25555/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "description=RimWorld Together Server"
+      - "version=25.7.11.1"
+      - "maintainer=YourName"
+    networks:
+      - rimworld-network
+
+volumes:
+  rimworld_data:
+    name: rimworld-together-data
+
+networks:
+  rimworld-network:
+    name: rimworld-network
+    driver: bridge
