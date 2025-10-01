@@ -4,15 +4,13 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # HIER GENAU EINTRAGEN (von der Releases-Seite):
-        # z.B. RWT_VERSION: v1.7.7
-        # z.B. RWT_ASSET: RimWorldTogether-Server-linux-arm64.tar.gz
+        # EXAKT so wie im Release benannt:
         RWT_VERSION: v25.7.11.1
         RWT_ASSET: linux-arm64.zip
     container_name: rimworld-together
     ports:
       - "25555:25555/tcp"
-      # - "25555:25555/udp"   # auskommentieren, wenn UDP benötigt wird
+      # - "25555:25555/udp"   # falls UDP gebraucht wird, Zeile aktivieren
     volumes:
       - ./Data:/Data
     environment:
