@@ -1,21 +1,16 @@
-version: "3.8"
-
 services:
   rimworld-together:
-    # Baut nativ auf ARM64 direkt aus diesem Repo
+    # Baue nativ auf deinem ARM-Host – Build-Kontext ist das Upstream-Repo
     build:
-      context: .
+      context: https://github.com/RimWorld-Together/Rimworld-Together.git#development
       dockerfile: Dockerfile
+      # Falls deren Dockerfile eine Runtime-ID akzeptiert:
       args:
-        PROJECT_PATH: "Server/RimWorldTogether.Server.csproj" # ggf. anpassen
-        CONFIGURATION: "Release"
-        RUNTIME_ID: "linux-arm64"
-    image: ghcr.io/zetomega/rimworld-together:arm64   # optional: eigener Tag/Push
+        RUNTIME_ID: linux-arm64
     container_name: rimworld-together
-    # Ports: TCP; falls UDP gebraucht wird, entkommentiere die UDP-Zeile
     ports:
       - "25555:25555/tcp"
-      # - "25555:25555/udp"
+      # - "25555:25555/udp"   # aktivieren, wenn UDP gebraucht wird
     volumes:
       - ./Data:/Data
     environment:
