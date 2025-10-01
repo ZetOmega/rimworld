@@ -1,37 +1,25 @@
-
-version: '3.8'
+version: "3.8"
 
 services:
   rimworld-together:
+    # Baut nativ auf ARM64 direkt aus diesem Repo
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: "Server/RimWorldTogether.Server.csproj" # ggf. anpassen
+        CONFIGURATION: "Release"
+        RUNTIME_ID: "linux-arm64"
+    image: ghcr.io/YOURORG/rimworld-together:arm64   # optional: eigener Tag/Push
     container_name: rimworld-together
-    restart: unless-stopped
+    # Ports: TCP; falls UDP gebraucht wird, entkommentiere die UDP-Zeile
     ports:
-      - "25555:25555"
+      - "25555:25555/tcp"
+      # - "25555:25555/udp"
     volumes:
-      - rimworld_data:/app/data
+      - ./Data:/Data
     environment:
-      - TZ=America/New_York
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:25555/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    labels:
-      - "description=RimWorld Together Server"
-      - "version=25.7.11.1"
-      - "maintainer=YourName"
-    networks:
-      - rimworld-network
-
-volumes:
-  rimworld_data:
-    name: rimworld-together-data
-
-networks:
-  rimworld-network:
-    name: rimworld-network
-    driver: bridge
+      - TZ=Europe/Berlin
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
